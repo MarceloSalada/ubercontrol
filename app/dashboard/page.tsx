@@ -36,6 +36,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const success = params?.success;
 
   const supabase = await createClient();
+  const db = supabase as any;
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -44,7 +46,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     redirect("/login");
   }
 
-  const { data: profile } = await supabase
+  const { data: profile } = await db
     .from("profiles")
     .select("name,email")
     .eq("id", user.id)
@@ -52,7 +54,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   const range = getMonthRange(monthRef);
 
-  const { data: entriesData } = await supabase
+  const { data: entriesData } = await db
     .from("daily_entries")
     .select("id,date,gross,km,fuel_cost,extras,profit")
     .eq("user_id", user.id)
@@ -60,7 +62,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     .lt("date", range.end)
     .order("date", { ascending: false });
 
-  const { data: monthlyCostsData } = await supabase
+  const { data: monthlyCostsData } = await db
     .from("monthly_costs")
     .select(
       "financing,insurance,ipva,oil_maintenance,reserve_maintenance,cellphone,washing,other_monthly"
@@ -69,8 +71,28 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     .eq("month_ref", monthRef)
     .maybeSingle();
 
-  const entries = entriesData ?? [];
-  const monthlyCosts = monthlyCostsData ?? null;
+  const entries = (entriesData ?? []) as Array<{
+    id: string;
+    date: string;
+    gross: number;
+    km: number;
+    fuel_cost: number;
+    extras: number;
+    profit: number;
+  }>;
+
+  const monthlyCosts = (monthlyCostsData ?? null) as
+    | {
+        financing?: number;
+        insurance?: number;
+        ipva?: number;
+        oil_maintenance?: number;
+        reserve_maintenance?: number;
+        cellphone?: number;
+        washing?: number;
+        other_monthly?: number;
+      }
+    | null;
 
   const gross = entries.reduce((acc, item) => acc + Number(item.gross || 0), 0);
   const variable = entries.reduce(
