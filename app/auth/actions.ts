@@ -49,14 +49,12 @@ export async function signupAction(formData: FormData) {
   }
 
   if (data.user) {
-    await supabase.from("profiles").insert({
+    const db = supabase as any;
+
+    await db.from("profiles").insert({
       id: data.user.id,
       name,
       email,
-    } as {
-      id: string;
-      name: string;
-      email: string;
     });
   }
 
