@@ -48,16 +48,6 @@ export async function signupAction(formData: FormData) {
     redirect(`/signup?error=${encodeURIComponent(error.message)}`);
   }
 
-  if (data.user) {
-    const db = supabase as any;
-
-    await db.from("profiles").insert({
-      id: data.user.id,
-      name,
-      email,
-    });
-  }
-
   redirect("/dashboard");
 }
 
