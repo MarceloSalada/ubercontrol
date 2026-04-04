@@ -5,7 +5,7 @@ const features = [
   "Lançamentos diários por motorista",
   "Custos mensais separados por mês",
   "Dashboard com visão real do período",
-  "Base pronta para integrar com Supabase",
+  "Base pronta para integrar com Supabase e Vercel",
 ];
 
 const kpis = [
@@ -23,18 +23,21 @@ export default function HomePage() {
           <div>
             <h1>UberControl</h1>
             <p>
-              Nova base profissional do app de finanças para motoristas. Esta versão foi planejada para
-              autenticação, banco de dados e crescimento comercial, sem gambiarra.
+              Plataforma de controle financeiro para motoristas, com login,
+              banco de dados, dashboard por mês e base pronta para crescimento comercial.
             </p>
+
             <div className="cta-row">
               <Link href="/login" className="primary-btn">
                 Entrar
               </Link>
+
               <Link href="/signup" className="secondary-btn">
                 Criar conta
               </Link>
+
               <Link href="/dashboard" className="secondary-btn">
-                Ver dashboard base
+                Ir para dashboard
               </Link>
             </div>
           </div>
