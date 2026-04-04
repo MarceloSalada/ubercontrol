@@ -5,7 +5,7 @@ const features = [
   "Lançamentos diários por motorista",
   "Custos mensais separados por mês",
   "Dashboard com visão real do período",
-  "Base pronta para integrar com Supabase e Vercel",
+  "Visual mobile premium com abas",
 ];
 
 const kpis = [
@@ -24,7 +24,7 @@ export default function HomePage() {
             <h1>UberControl</h1>
             <p>
               Plataforma de controle financeiro para motoristas, com login,
-              banco de dados, dashboard por mês e base pronta para crescimento comercial.
+              banco de dados, dashboard por mês, lançamentos, custos e gráficos.
             </p>
 
             <div className="cta-row">
@@ -36,14 +36,14 @@ export default function HomePage() {
                 Criar conta
               </Link>
 
-              <Link href="/dashboard" className="secondary-btn">
-                Ir para dashboard
+              <Link href="/panel/dashboard" className="secondary-btn">
+                Abrir painel
               </Link>
             </div>
           </div>
 
           <div className="card">
-            <h2 className="section-title">Escopo inicial</h2>
+            <h2 className="section-title">Escopo atual</h2>
             <ul className="list">
               {features.map((item) => (
                 <li key={item}>{item}</li>
