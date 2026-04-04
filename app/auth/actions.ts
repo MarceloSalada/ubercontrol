@@ -13,7 +13,10 @@ export async function loginAction(formData: FormData) {
   const password = getString(formData, "password");
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
 
   if (error) {
     redirect(`/login?error=${encodeURIComponent(error.message)}`);
@@ -46,10 +49,14 @@ export async function signupAction(formData: FormData) {
   }
 
   if (data.user) {
-    await supabase.from("profiles").upsert({
+    await supabase.from("profiles").insert({
       id: data.user.id,
       name,
       email,
+    } as {
+      id: string;
+      name: string;
+      email: string;
     });
   }
 
