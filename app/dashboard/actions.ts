@@ -12,6 +12,8 @@ function getString(formData: FormData, key: string) {
 
 export async function createDailyEntryAction(formData: FormData) {
   const supabase = await createClient();
+  const db = supabase as any;
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -35,7 +37,7 @@ export async function createDailyEntryAction(formData: FormData) {
   const totalCost = fuelCost + extras;
   const profit = gross - totalCost;
 
-  const { error } = await supabase.from("daily_entries").insert({
+  const { error } = await db.from("daily_entries").insert({
     user_id: user.id,
     date,
     gross,
@@ -58,6 +60,8 @@ export async function createDailyEntryAction(formData: FormData) {
 
 export async function saveMonthlyCostsAction(formData: FormData) {
   const supabase = await createClient();
+  const db = supabase as any;
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -85,7 +89,7 @@ export async function saveMonthlyCostsAction(formData: FormData) {
     other_monthly: parseNumber(formData.get("other_monthly")),
   };
 
-  const { error } = await supabase.from("monthly_costs").upsert(payload, {
+  const { error } = await db.from("monthly_costs").upsert(payload, {
     onConflict: "user_id,month_ref",
   });
 
@@ -99,6 +103,8 @@ export async function saveMonthlyCostsAction(formData: FormData) {
 
 export async function deleteDailyEntryAction(formData: FormData) {
   const supabase = await createClient();
+  const db = supabase as any;
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -114,7 +120,7 @@ export async function deleteDailyEntryAction(formData: FormData) {
     redirect("/dashboard?error=Lan%C3%A7amento%20inv%C3%A1lido");
   }
 
-  const { error } = await supabase.from("daily_entries").delete().eq("id", id).eq("user_id", user.id);
+  const { error } = await db.from("daily_entries").delete().eq("id", id).eq("user_id", user.id);
 
   if (error) {
     redirect(`/dashboard?error=${encodeURIComponent(error.message)}`);
