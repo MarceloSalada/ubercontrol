@@ -1,28 +1,62 @@
 import Link from "next/link";
+import { signupAction } from "@/app/auth/actions";
+import { AuthMessage } from "@/components/auth/auth-message";
 
-export default function SignupPage() {
+type SignupPageProps = {
+  searchParams?: Promise<{
+    error?: string;
+    success?: string;
+  }>;
+};
+
+export default async function SignupPage({ searchParams }: SignupPageProps) {
+  const params = await searchParams;
+  const error = params?.error;
+  const success = params?.success;
+
   return (
     <main className="auth-shell">
       <section className="card auth-card">
         <h1 className="section-title">Criar conta</h1>
         <p className="muted">
-          Tela base de cadastro. Vamos conectar este fluxo ao Supabase Auth com armazenamento por usuário.
+          Cadastre-se para salvar seus dados no banco e acessar seu painel de qualquer lugar.
         </p>
 
-        <form className="form-grid">
+        <form action={signupAction} className="form-grid">
+          <AuthMessage error={error} success={success} />
+
           <label className="field">
             <span>Nome</span>
-            <input className="input" type="text" placeholder="Seu nome" />
+            <input
+              className="input"
+              type="text"
+              name="name"
+              placeholder="Seu nome"
+              required
+            />
           </label>
 
           <label className="field">
             <span>E-mail</span>
-            <input className="input" type="email" placeholder="voce@email.com" />
+            <input
+              className="input"
+              type="email"
+              name="email"
+              placeholder="voce@email.com"
+              required
+            />
           </label>
 
           <label className="field">
             <span>Senha</span>
-            <input className="input" type="password" placeholder="********" />
+            <input
+              className="input"
+              type="password"
+              name="password"
+              placeholder="********"
+              minLength={6}
+              required
+            />
           </label>
 
           <button type="submit" className="primary-btn">
