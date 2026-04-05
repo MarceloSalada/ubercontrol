@@ -1,14 +1,13 @@
-import {
-  CalendarDays,
-  Landmark,
-  PiggyBank,
-  TrendingUp,
-  Wallet,
-} from "lucide-react";
+import { CalendarDays, Landmark, PiggyBank, TrendingUp, Wallet } from "lucide-react";
 import { ChartsView } from "@/components/panel/charts-view";
 import { PanelHeader } from "@/components/panel/header";
 import { StatCard } from "@/components/panel/stat-card";
-import { currentMonthRef, getMonthBundle, getPanelSession } from "@/lib/panel-data";
+import {
+  currentMonthRef,
+  getMonthBundle,
+  getPanelSession,
+  getReserveHistory,
+} from "@/lib/panel-data";
 import { formatCurrency } from "@/lib/utils/format";
 
 export default async function PanelChartsPage({
@@ -19,22 +18,10 @@ export default async function PanelChartsPage({
   const params = await searchParams;
   const monthRef = params?.month || currentMonthRef();
   const { user } = await getPanelSession();
-  const { metrics, reserveHistory } = await getMonthBundle(user.id, monthRef);
-
-  const bars = [
-    { name: "Receita", value: metrics.gross },
-    { name: "Variáveis", value: metrics.variable },
-    { name: "Fixos", value: metrics.fixed },
-    { name: "Lucro", value: metrics.net },
-    { name: "Reserva", value: metrics.reserveBalance },
-  ];
-
-  const pie = [
-    { name: "Variáveis", value: metrics.variable },
-    { name: "Fixos", value: metrics.fixed },
-    { name: "Reserva", value: Math.max(metrics.reserveBalance, 0) },
-    { name: "Lucro", value: Math.max(metrics.net, 0) },
-  ].filter((item) => item.value > 0);
+  const [{ metrics }, reserveHistory] = await Promise.all([
+    getMonthBundle(user.id, monthRef),
+    getReserveHistory(user.id, monthRef),
+  ]);
 
   const history = reserveHistory.map((item) => ({
     label: item.label,
@@ -48,7 +35,7 @@ export default async function PanelChartsPage({
     <>
       <PanelHeader
         title="Gráficos"
-        subtitle="Página dedicada para leitura rápida do fechamento mensal."
+        subtitle="Leitura visual do mês."
         monthRef={monthRef}
       />
 
@@ -73,7 +60,7 @@ export default async function PanelChartsPage({
         />
       </section>
 
-      <ChartsView bars={bars} pie={pie} history={history} />
+      <ChartsView history={history} />
     </>
   );
-        }
+}
