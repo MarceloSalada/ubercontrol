@@ -178,7 +178,6 @@ export async function savePanelCostsAction(formData: FormData) {
       financing: parseMoneyInput(formData.get("financing") ?? "0", { min: 0, max: 100000 }),
       insurance: parseMoneyInput(formData.get("insurance") ?? "0", { min: 0, max: 100000 }),
       ipva: parseMoneyInput(formData.get("ipva") ?? "0", { min: 0, max: 100000 }),
-      oil_maintenance: parseMoneyInput(formData.get("oil_maintenance") ?? "0", { min: 0, max: 100000 }),
       reserve_maintenance: parseMoneyInput(formData.get("reserve_maintenance") ?? "0", { min: 0, max: 100000 }),
       cellphone: parseMoneyInput(formData.get("cellphone") ?? "0", { min: 0, max: 100000 }),
       washing: parseMoneyInput(formData.get("washing") ?? "0", { min: 0, max: 100000 }),
@@ -199,4 +198,4 @@ export async function savePanelCostsAction(formData: FormData) {
     const message = error instanceof Error ? error.message : "Dados inválidos.";
     redirectWithError("/panel/costs", message);
   }
-}
+      }
