@@ -4,7 +4,10 @@ export type AuthorizedAccessRow = {
   allowed_until?: string | null;
 };
 
-export function isAuthorizedAccess(row: AuthorizedAccessRow | null | undefined, email: string | null | undefined) {
+export function isAuthorizedAccess(
+  row: AuthorizedAccessRow | null | undefined,
+  email: string | null | undefined
+) {
   if (!row || !email) return false;
   if (!row.is_active) return false;
   if (row.email.trim().toLowerCase() !== email.trim().toLowerCase()) return false;
