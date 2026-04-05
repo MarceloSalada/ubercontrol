@@ -15,6 +15,14 @@ export function getMonthRange(monthRef: string) {
   return { start, end };
 }
 
+function endOfMonthDate(monthRef: string) {
+  const [year, month] = monthRef.split("-").map(Number);
+  const lastDay = new Date(year, month, 0);
+  return `${lastDay.getFullYear()}-${String(lastDay.getMonth() + 1).padStart(2, "0")}-${String(
+    lastDay.getDate()
+  ).padStart(2, "0")}`;
+}
+
 export async function getPanelSession() {
   const supabase = await createClient();
   const db = supabase as any;
@@ -58,6 +66,7 @@ export async function getMonthBundle(userId: string, monthRef: string) {
   const supabase = await createClient();
   const db = supabase as any;
   const range = getMonthRange(monthRef);
+  const monthEnd = endOfMonthDate(monthRef);
 
   const { data: entriesData } = await db
     .from("daily_entries")
@@ -73,6 +82,13 @@ export async function getMonthBundle(userId: string, monthRef: string) {
     .eq("user_id", userId)
     .eq("month_ref", monthRef)
     .maybeSingle();
+
+  const { data: reserveMovementsData } = await db
+    .from("maintenance_reserve_movements")
+    .select("id,movement_date,month_ref,movement_type,amount,description")
+    .eq("user_id", userId)
+    .lte("movement_date", monthEnd)
+    .order("movement_date", { ascending: true });
 
   const entries = (entriesData ?? []) as Array<{
     id: string;
@@ -100,6 +116,15 @@ export async function getMonthBundle(userId: string, monthRef: string) {
       }
     | null;
 
+  const reserveMovements = (reserveMovementsData ?? []) as Array<{
+    id: string;
+    movement_date: string;
+    month_ref: string;
+    movement_type: "deposit" | "expense" | "adjustment";
+    amount: number;
+    description?: string | null;
+  }>;
+
   const gross = entries.reduce((acc, item) => acc + Number(item.gross || 0), 0);
   const variable = entries.reduce(
     (acc, item) => acc + Number(item.fuel_cost || 0) + Number(item.extras || 0),
@@ -119,9 +144,24 @@ export async function getMonthBundle(userId: string, monthRef: string) {
   const workedDays = entries.length;
   const average = workedDays > 0 ? net / workedDays : 0;
 
+  const reserveDeposits = reserveMovements
+    .filter((item) => item.movement_type === "deposit")
+    .reduce((acc, item) => acc + Number(item.amount || 0), 0);
+
+  const reserveExpenses = reserveMovements
+    .filter((item) => item.movement_type === "expense")
+    .reduce((acc, item) => acc + Number(item.amount || 0), 0);
+
+  const reserveAdjustments = reserveMovements
+    .filter((item) => item.movement_type === "adjustment")
+    .reduce((acc, item) => acc + Number(item.amount || 0), 0);
+
+  const reserveBalance = reserveDeposits + reserveAdjustments - reserveExpenses;
+
   return {
     entries,
     monthlyCosts,
+    reserveMovements,
     metrics: {
       gross,
       variable,
@@ -129,6 +169,10 @@ export async function getMonthBundle(userId: string, monthRef: string) {
       net,
       workedDays,
       average,
+      reserveDeposits,
+      reserveExpenses,
+      reserveAdjustments,
+      reserveBalance,
     },
   };
-        }
+}
