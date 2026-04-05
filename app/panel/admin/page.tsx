@@ -4,7 +4,11 @@ import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/security/admin";
 import { saveAuthorizedUserAction } from "@/app/panel/admin/actions";
 
-export default async function PanelAdminPage({ searchParams }: { searchParams?: Promise<{ error?: string; success?: string }> }) {
+export default async function PanelAdminPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ error?: string; success?: string }>;
+}) {
   const params = await searchParams;
   const supabase = await createClient();
   const db = supabase as any;
@@ -31,16 +35,30 @@ export default async function PanelAdminPage({ searchParams }: { searchParams?: 
       <section className="panel-card">
         <h2 className="section-title">Liberar usuário</h2>
         <form action={saveAuthorizedUserAction} className="panel-form two-col">
-          <label className="full"><span>E-mail</span><input type="email" name="email" placeholder="cliente@email.com" required /></label>
-          <label><span>Status</span>
+          <label className="full">
+            <span>E-mail</span>
+            <input type="email" name="email" placeholder="cliente@email.com" required />
+          </label>
+          <label>
+            <span>Status</span>
             <select name="is_active" defaultValue="true">
               <option value="true">Ativo</option>
               <option value="false">Inativo</option>
             </select>
           </label>
-          <label><span>Plano</span><input type="text" name="plan" placeholder="manual" /></label>
-          <label className="full"><span>Observações</span><textarea name="notes" placeholder="Observações internas" /></label>
-          <div className="full"><button className="panel-button" type="submit">Salvar usuário autorizado</button></div>
+          <label>
+            <span>Plano</span>
+            <input type="text" name="plan" placeholder="manual" />
+          </label>
+          <label className="full">
+            <span>Observações</span>
+            <textarea name="notes" placeholder="Observações internas" />
+          </label>
+          <div className="full">
+            <button className="panel-button" type="submit">
+              Salvar usuário autorizado
+            </button>
+          </div>
         </form>
       </section>
 
@@ -59,7 +77,9 @@ export default async function PanelAdminPage({ searchParams }: { searchParams?: 
               <small>{item.notes || "Sem observações"}</small>
             </article>
           ))}
-          {(authorizedUsers ?? []).length === 0 ? <p className="panel-empty">Nenhum usuário autorizado cadastrado.</p> : null}
+          {(authorizedUsers ?? []).length === 0 ? (
+            <p className="panel-empty">Nenhum usuário autorizado cadastrado.</p>
+          ) : null}
         </div>
       </section>
     </>
