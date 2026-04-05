@@ -69,7 +69,7 @@ export async function getMonthBundle(userId: string, monthRef: string) {
 
   const { data: monthlyCostsData } = await db
     .from("monthly_costs")
-    .select("id,financing,insurance,ipva,oil_maintenance,reserve_maintenance,cellphone,washing,other_monthly")
+    .select("id,financing,insurance,ipva,reserve_maintenance,cellphone,washing,other_monthly")
     .eq("user_id", userId)
     .eq("month_ref", monthRef)
     .maybeSingle();
@@ -93,7 +93,6 @@ export async function getMonthBundle(userId: string, monthRef: string) {
         financing?: number;
         insurance?: number;
         ipva?: number;
-        oil_maintenance?: number;
         reserve_maintenance?: number;
         cellphone?: number;
         washing?: number;
@@ -111,7 +110,6 @@ export async function getMonthBundle(userId: string, monthRef: string) {
     Number(monthlyCosts?.financing || 0) +
     Number(monthlyCosts?.insurance || 0) +
     Number(monthlyCosts?.ipva || 0) +
-    Number(monthlyCosts?.oil_maintenance || 0) +
     Number(monthlyCosts?.reserve_maintenance || 0) +
     Number(monthlyCosts?.cellphone || 0) +
     Number(monthlyCosts?.washing || 0) +
@@ -133,4 +131,4 @@ export async function getMonthBundle(userId: string, monthRef: string) {
       average,
     },
   };
-}
+        }
