@@ -21,7 +21,11 @@ export function MobileNav() {
         const Icon = item.icon;
         const active = pathname === item.href;
         return (
-          <Link key={item.href} href={item.href} className={`panel-mobile-link ${active ? "active" : ""}`}>
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`panel-mobile-link ${active ? "active" : ""}`}
+          >
             <Icon size={18} />
             <span>{item.label}</span>
           </Link>
