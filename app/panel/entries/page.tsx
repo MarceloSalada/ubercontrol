@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { PanelHeader } from "@/components/panel/header";
 import { createPanelEntryAction, deletePanelEntryAction } from "@/app/panel/actions";
 import { currentMonthRef, getMonthBundle, getPanelSession } from "@/lib/panel-data";
@@ -19,14 +18,16 @@ export default async function PanelEntriesPage({
     <>
       <PanelHeader
         title="Lançamentos"
-        subtitle="Cadastre, revise, edite e exclua diárias do período."
+        subtitle="Cadastre as diárias do período."
         monthRef={monthRef}
       />
+
       {params?.error ? <div className="panel-info error">{params.error}</div> : null}
       {params?.success ? <div className="panel-info success">{params.success}</div> : null}
 
       <section className="panel-card">
         <h2 className="section-title">Nova diária</h2>
+
         <form action={createPanelEntryAction} className="panel-form two-col">
           <label>
             <span>Data</span>
@@ -69,47 +70,38 @@ export default async function PanelEntriesPage({
       </section>
 
       <section className="panel-card panel-section">
-        <div className="panel-header-top">
-          <div>
-            <h2 className="section-title">Lançamentos do mês</h2>
-          </div>
-        </div>
+        <h2 className="section-title">Lançamentos do mês</h2>
 
-        <div className="panel-list">
+        <div className="panel-list compact-list">
           {entries.map((entry) => (
-            <article key={entry.id} className="panel-entry">
-              <div className="panel-entry-top">
-                <div>
-                  <strong>{new Date(`${entry.date}T12:00:00`).toLocaleDateString("pt-BR")}</strong>
-                  <p>
-                    Receita {formatCurrency(Number(entry.gross))} • KM {entry.km}
-                  </p>
-                </div>
-
-                <div className="panel-inline">
-                  <Link className="panel-button-secondary" href={`/panel/entries/${entry.id}`}>
-                    Editar
-                  </Link>
-
-                  <form action={deletePanelEntryAction}>
-                    <input type="hidden" name="id" value={entry.id} />
-                    <input type="hidden" name="month" value={monthRef} />
-                    <SubmitButton
-                      idleLabel="Excluir"
-                      pendingLabel="Excluindo..."
-                      className="panel-button-secondary"
-                    />
-                  </form>
-                </div>
+            <article key={entry.id} className="panel-entry compact-entry">
+              <div className="compact-entry-row">
+                <strong>{new Date(`${entry.date}T12:00:00`).toLocaleDateString("pt-BR")}</strong>
+                <span>Receita {formatCurrency(Number(entry.gross))}</span>
               </div>
 
-              <small>
-                Combustível {formatCurrency(Number(entry.fuel_cost))} • Extras{" "}
-                {formatCurrency(Number(entry.extras))}
-              </small>
+              <div className="compact-entry-row">
+                <span>KM {Number(entry.km)}</span>
+                <span>Comb. {formatCurrency(Number(entry.fuel_cost))}</span>
+              </div>
 
-              <div className="panel-entry-profit">
-                Lucro {formatCurrency(Number(entry.profit))}
+              <div className="compact-entry-row">
+                <span>Extras {formatCurrency(Number(entry.extras))}</span>
+                <strong className="panel-entry-profit">
+                  Lucro {formatCurrency(Number(entry.profit))}
+                </strong>
+              </div>
+
+              <div className="compact-entry-actions">
+                <form action={deletePanelEntryAction}>
+                  <input type="hidden" name="id" value={entry.id} />
+                  <input type="hidden" name="month" value={monthRef} />
+                  <SubmitButton
+                    idleLabel="Excluir"
+                    pendingLabel="Excluindo..."
+                    className="panel-button-secondary"
+                  />
+                </form>
               </div>
             </article>
           ))}
