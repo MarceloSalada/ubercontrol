@@ -20,8 +20,6 @@ export default async function PanelChartsPage({
       label: "Mês atual",
       lucro: metrics.net,
       reserva: metrics.reserveBalance,
-      aportes: metrics.reserveMonthDeposits,
-      gastos: metrics.reserveMonthExpenses,
     },
   ];
 
