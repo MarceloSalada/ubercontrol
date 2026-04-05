@@ -23,6 +23,32 @@ function endOfMonthDate(monthRef: string) {
   ).padStart(2, "0")}`;
 }
 
+function monthRefFromDateString(date: string) {
+  return date.slice(0, 7);
+}
+
+function shiftMonthRef(monthRef: string, offset: number) {
+  const [year, month] = monthRef.split("-").map(Number);
+  const date = new Date(year, month - 1 + offset, 1);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function buildMonthSequence(endMonthRef: string, count = 6) {
+  const months: string[] = [];
+  for (let i = count - 1; i >= 0; i -= 1) {
+    months.push(shiftMonthRef(endMonthRef, -i));
+  }
+  return months;
+}
+
+function formatShortMonth(monthRef: string) {
+  const [year, month] = monthRef.split("-").map(Number);
+  return new Date(year, month - 1, 1).toLocaleDateString("pt-BR", {
+    month: "short",
+    year: "2-digit",
+  });
+}
+
 export async function getPanelSession() {
   const supabase = await createClient();
   const db = supabase as any;
@@ -68,6 +94,9 @@ export async function getMonthBundle(userId: string, monthRef: string) {
   const range = getMonthRange(monthRef);
   const monthEnd = endOfMonthDate(monthRef);
 
+  const historyMonths = buildMonthSequence(monthRef, 6);
+  const historyStart = getMonthRange(historyMonths[0]).start;
+
   const { data: entriesData } = await db
     .from("daily_entries")
     .select("id,date,gross,km,fuel_price,consumption,extras,fuel_cost,total_cost,profit")
@@ -78,7 +107,7 @@ export async function getMonthBundle(userId: string, monthRef: string) {
 
   const { data: monthlyCostsData } = await db
     .from("monthly_costs")
-    .select("id,financing,insurance,ipva,reserve_maintenance,cellphone,washing,other_monthly")
+    .select("id,month_ref,financing,insurance,ipva,reserve_maintenance,cellphone,washing,other_monthly")
     .eq("user_id", userId)
     .eq("month_ref", monthRef)
     .maybeSingle();
@@ -89,6 +118,20 @@ export async function getMonthBundle(userId: string, monthRef: string) {
     .eq("user_id", userId)
     .lte("movement_date", monthEnd)
     .order("movement_date", { ascending: true });
+
+  const { data: historyEntriesData } = await db
+    .from("daily_entries")
+    .select("date,gross,fuel_cost,extras")
+    .eq("user_id", userId)
+    .gte("date", historyStart)
+    .lte("date", monthEnd);
+
+  const { data: historyMonthlyCostsData } = await db
+    .from("monthly_costs")
+    .select("month_ref,financing,insurance,ipva,reserve_maintenance,cellphone,washing,other_monthly")
+    .eq("user_id", userId)
+    .gte("month_ref", historyMonths[0])
+    .lte("month_ref", monthRef);
 
   const entries = (entriesData ?? []) as Array<{
     id: string;
@@ -106,6 +149,7 @@ export async function getMonthBundle(userId: string, monthRef: string) {
   const monthlyCosts = (monthlyCostsData ?? null) as
     | {
         id?: string;
+        month_ref?: string;
         financing?: number;
         insurance?: number;
         ipva?: number;
@@ -172,11 +216,133 @@ export async function getMonthBundle(userId: string, monthRef: string) {
     .filter((item) => item.movement_type === "adjustment")
     .reduce((acc, item) => acc + Number(item.amount || 0), 0);
 
+  const historyMap = new Map<
+    string,
+    {
+      monthRef: string;
+      label: string;
+      gross: number;
+      variable: number;
+      fixed: number;
+      net: number;
+      reserveDeposits: number;
+      reserveExpenses: number;
+      reserveAdjustments: number;
+      reserveBalance: number;
+    }
+  >();
+
+  historyMonths.forEach((item) => {
+    historyMap.set(item, {
+      monthRef: item,
+      label: formatShortMonth(item),
+      gross: 0,
+      variable: 0,
+      fixed: 0,
+      net: 0,
+      reserveDeposits: 0,
+      reserveExpenses: 0,
+      reserveAdjustments: 0,
+      reserveBalance: 0,
+    });
+  });
+
+  const historyEntries = (historyEntriesData ?? []) as Array<{
+    date: string;
+    gross: number;
+    fuel_cost: number;
+    extras: number;
+  }>;
+
+  historyEntries.forEach((item) => {
+    const ref = monthRefFromDateString(item.date);
+    const bucket = historyMap.get(ref);
+    if (!bucket) return;
+
+    bucket.gross += Number(item.gross || 0);
+    bucket.variable += Number(item.fuel_cost || 0) + Number(item.extras || 0);
+  });
+
+  const historyMonthlyCosts = (historyMonthlyCostsData ?? []) as Array<{
+    month_ref: string;
+    financing?: number;
+    insurance?: number;
+    ipva?: number;
+    reserve_maintenance?: number;
+    cellphone?: number;
+    washing?: number;
+    other_monthly?: number;
+  }>;
+
+  historyMonthlyCosts.forEach((item) => {
+    const bucket = historyMap.get(item.month_ref);
+    if (!bucket) return;
+
+    bucket.fixed =
+      Number(item.financing || 0) +
+      Number(item.insurance || 0) +
+      Number(item.ipva || 0) +
+      Number(item.reserve_maintenance || 0) +
+      Number(item.cellphone || 0) +
+      Number(item.washing || 0) +
+      Number(item.other_monthly || 0);
+  });
+
+  const historyStartDate = historyStart;
+
+  const openingReserveBalance = reserveMovements
+    .filter((item) => item.movement_date < historyStartDate)
+    .reduce((acc, item) => {
+      if (item.movement_type === "deposit") return acc + Number(item.amount || 0);
+      if (item.movement_type === "expense") return acc - Number(item.amount || 0);
+      return acc + Number(item.amount || 0);
+    }, 0);
+
+  reserveMovements.forEach((item) => {
+    const bucket = historyMap.get(item.month_ref);
+    if (!bucket) return;
+
+    if (item.movement_type === "deposit") {
+      bucket.reserveDeposits += Number(item.amount || 0);
+    } else if (item.movement_type === "expense") {
+      bucket.reserveExpenses += Number(item.amount || 0);
+    } else {
+      bucket.reserveAdjustments += Number(item.amount || 0);
+    }
+  });
+
+  let runningReserve = openingReserveBalance;
+
+  const reserveHistory = historyMonths.map((item) => {
+    const bucket = historyMap.get(item)!;
+    bucket.net = bucket.gross - bucket.variable - bucket.fixed;
+    runningReserve =
+      runningReserve +
+      bucket.reserveDeposits +
+      bucket.reserveAdjustments -
+      bucket.reserveExpenses;
+    bucket.reserveBalance = runningReserve;
+
+    return {
+      monthRef: bucket.monthRef,
+      label: bucket.label,
+      gross: Number(bucket.gross.toFixed(2)),
+      variable: Number(bucket.variable.toFixed(2)),
+      fixed: Number(bucket.fixed.toFixed(2)),
+      net: Number(bucket.net.toFixed(2)),
+      reserveDeposits: Number(bucket.reserveDeposits.toFixed(2)),
+      reserveExpenses: Number(bucket.reserveExpenses.toFixed(2)),
+      reserveAdjustments: Number(bucket.reserveAdjustments.toFixed(2)),
+      reserveBalance: Number(bucket.reserveBalance.toFixed(2)),
+    };
+  });
+
   return {
     entries,
     monthlyCosts,
     reserveMovements,
     reserveMovementsMonth,
+    reserveHistory,
     metrics: {
       gross,
       variable,
@@ -216,4 +382,4 @@ export async function getReserveMovementById(userId: string, id: string) {
         description?: string | null;
       }
     | null;
-          }
+}
