@@ -382,4 +382,4 @@ export async function getReserveMovementById(userId: string, id: string) {
         description?: string | null;
       }
     | null;
-}
+        }
