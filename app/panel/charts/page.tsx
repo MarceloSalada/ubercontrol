@@ -1,7 +1,7 @@
 import {
   CalendarDays,
   Landmark,
-  ShieldDollar,
+  PiggyBank,
   TrendingUp,
   Wallet,
 } from "lucide-react";
@@ -61,7 +61,7 @@ export default async function PanelChartsPage({
         <StatCard
           label="Reserva acumulada"
           value={formatCurrency(metrics.reserveBalance)}
-          icon={ShieldDollar}
+          icon={PiggyBank}
         />
       </section>
 
