@@ -19,7 +19,7 @@ export default async function PanelChartsPage({
   const params = await searchParams;
   const monthRef = params?.month || currentMonthRef();
   const { user } = await getPanelSession();
-  const { metrics } = await getMonthBundle(user.id, monthRef);
+  const { metrics, reserveHistory } = await getMonthBundle(user.id, monthRef);
 
   const bars = [
     { name: "Receita", value: metrics.gross },
@@ -35,6 +35,14 @@ export default async function PanelChartsPage({
     { name: "Reserva", value: Math.max(metrics.reserveBalance, 0) },
     { name: "Lucro", value: Math.max(metrics.net, 0) },
   ].filter((item) => item.value > 0);
+
+  const history = reserveHistory.map((item) => ({
+    label: item.label,
+    lucro: item.net,
+    reserva: item.reserveBalance,
+    aportes: item.reserveDeposits,
+    gastos: item.reserveExpenses,
+  }));
 
   return (
     <>
@@ -65,7 +73,7 @@ export default async function PanelChartsPage({
         />
       </section>
 
-      <ChartsView bars={bars} pie={pie} />
+      <ChartsView bars={bars} pie={pie} history={history} />
     </>
   );
 }
