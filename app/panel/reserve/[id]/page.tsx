@@ -49,7 +49,6 @@ export default async function PanelReserveEditPage({
             <select name="movement_type" defaultValue={movement.movement_type}>
               <option value="deposit">Aporte</option>
               <option value="expense">Gasto</option>
-              <option value="adjustment">Ajuste</option>
             </select>
           </label>
 
