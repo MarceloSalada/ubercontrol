@@ -11,6 +11,16 @@ import {
   parseMonthRef,
 } from "@/lib/security/validation";
 
+function isRedirectError(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "digest" in error &&
+    typeof (error as { digest?: unknown }).digest === "string" &&
+    (error as { digest: string }).digest.includes("NEXT_REDIRECT")
+  );
+}
+
 function redirectWithError(path: string, message: string) {
   redirect(`${path}${path.includes("?") ? "&" : "?"}error=${encodeURIComponent(message)}`);
 }
@@ -22,6 +32,10 @@ function revalidatePanel(monthRef: string) {
   revalidatePath("/panel/charts");
   revalidatePath("/panel/admin");
   if (monthRef) revalidatePath(`/panel/dashboard?month=${monthRef}`);
+}
+
+function monthStartDate(monthRef: string) {
+  return `${monthRef}-01`;
 }
 
 export async function createPanelEntryAction(formData: FormData) {
@@ -67,6 +81,8 @@ export async function createPanelEntryAction(formData: FormData) {
     revalidatePanel(monthRef);
     redirect(`/panel/entries?month=${monthRef}&success=Lan%C3%A7amento%20salvo`);
   } catch (error) {
+    if (isRedirectError(error)) throw error;
+
     const message = error instanceof Error ? error.message : "Dados inválidos.";
     redirectWithError("/panel/entries", message);
   }
@@ -123,6 +139,8 @@ export async function updatePanelEntryAction(formData: FormData) {
     revalidatePanel(monthRef);
     redirect(`/panel/entries?month=${monthRef}&success=Lan%C3%A7amento%20atualizado`);
   } catch (error) {
+    if (isRedirectError(error)) throw error;
+
     const message = error instanceof Error ? error.message : "Dados inválidos.";
     redirectWithError("/panel/entries", message);
   }
@@ -192,10 +210,43 @@ export async function savePanelCostsAction(formData: FormData) {
       redirectWithError(`/panel/costs?month=${monthRef}`, "Não foi possível salvar os custos.");
     }
 
+    const depositAmount = Number(payload.reserve_maintenance || 0);
+
+    const { data: existingDeposit } = await db
+      .from("maintenance_reserve_movements")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("month_ref", monthRef)
+      .eq("movement_type", "deposit")
+      .eq("description", "Aporte mensal planejado")
+      .maybeSingle();
+
+    if (existingDeposit?.id) {
+      await db
+        .from("maintenance_reserve_movements")
+        .update({
+          movement_date: monthStartDate(monthRef),
+          amount: depositAmount,
+        })
+        .eq("id", existingDeposit.id)
+        .eq("user_id", user.id);
+    } else {
+      await db.from("maintenance_reserve_movements").insert({
+        user_id: user.id,
+        movement_date: monthStartDate(monthRef),
+        month_ref: monthRef,
+        movement_type: "deposit",
+        amount: depositAmount,
+        description: "Aporte mensal planejado",
+      });
+    }
+
     revalidatePanel(monthRef);
     redirect(`/panel/costs?month=${monthRef}&success=Custos%20salvos`);
   } catch (error) {
+    if (isRedirectError(error)) throw error;
+
     const message = error instanceof Error ? error.message : "Dados inválidos.";
     redirectWithError("/panel/costs", message);
   }
-      }
+}
