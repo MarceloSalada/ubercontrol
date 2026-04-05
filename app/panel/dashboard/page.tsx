@@ -1,5 +1,12 @@
 import Link from "next/link";
-import { ArrowRight, Banknote, Landmark, TrendingUp, Zap } from "lucide-react";
+import {
+  ArrowRight,
+  Banknote,
+  Landmark,
+  ShieldDollar,
+  TrendingUp,
+  Zap,
+} from "lucide-react";
 import { PanelHeader } from "@/components/panel/header";
 import { StatCard } from "@/components/panel/stat-card";
 import { currentMonthRef, getMonthBundle, getPanelSession } from "@/lib/panel-data";
@@ -36,6 +43,10 @@ export default async function PanelDashboardPage({
           <span>Média líquida/dia</span>
           <strong>{formatCurrency(metrics.average)}</strong>
         </div>
+        <div className="panel-kv-row">
+          <span>Reserva manutenção acumulada</span>
+          <strong>{formatCurrency(metrics.reserveBalance)}</strong>
+        </div>
       </section>
 
       <section className="panel-stat-grid">
@@ -59,6 +70,11 @@ export default async function PanelDashboardPage({
           value={formatCurrency(metrics.net)}
           icon={Banknote}
           tone={metrics.net < 0 ? "danger" : "default"}
+        />
+        <StatCard
+          label="Reserva acumulada"
+          value={formatCurrency(metrics.reserveBalance)}
+          icon={ShieldDollar}
         />
       </section>
 
@@ -110,4 +126,4 @@ export default async function PanelDashboardPage({
       </section>
     </>
   );
-          }
+}
