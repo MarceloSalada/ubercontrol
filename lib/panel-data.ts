@@ -125,6 +125,8 @@ export async function getMonthBundle(userId: string, monthRef: string) {
     description?: string | null;
   }>;
 
+  const reserveMovementsMonth = reserveMovements.filter((item) => item.month_ref === monthRef);
+
   const gross = entries.reduce((acc, item) => acc + Number(item.gross || 0), 0);
   const variable = entries.reduce(
     (acc, item) => acc + Number(item.fuel_cost || 0) + Number(item.extras || 0),
@@ -158,10 +160,23 @@ export async function getMonthBundle(userId: string, monthRef: string) {
 
   const reserveBalance = reserveDeposits + reserveAdjustments - reserveExpenses;
 
+  const reserveMonthDeposits = reserveMovementsMonth
+    .filter((item) => item.movement_type === "deposit")
+    .reduce((acc, item) => acc + Number(item.amount || 0), 0);
+
+  const reserveMonthExpenses = reserveMovementsMonth
+    .filter((item) => item.movement_type === "expense")
+    .reduce((acc, item) => acc + Number(item.amount || 0), 0);
+
+  const reserveMonthAdjustments = reserveMovementsMonth
+    .filter((item) => item.movement_type === "adjustment")
+    .reduce((acc, item) => acc + Number(item.amount || 0), 0);
+
   return {
     entries,
     monthlyCosts,
     reserveMovements,
+    reserveMovementsMonth,
     metrics: {
       gross,
       variable,
@@ -173,6 +188,32 @@ export async function getMonthBundle(userId: string, monthRef: string) {
       reserveExpenses,
       reserveAdjustments,
       reserveBalance,
+      reserveMonthDeposits,
+      reserveMonthExpenses,
+      reserveMonthAdjustments,
     },
   };
 }
+
+export async function getReserveMovementById(userId: string, id: string) {
+  const supabase = await createClient();
+  const db = supabase as any;
+
+  const { data } = await db
+    .from("maintenance_reserve_movements")
+    .select("id,movement_date,month_ref,movement_type,amount,description")
+    .eq("id", id)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  return data as
+    | {
+        id: string;
+        movement_date: string;
+        month_ref: string;
+        movement_type: "deposit" | "expense" | "adjustment";
+        amount: number;
+        description?: string | null;
+      }
+    | null;
+          }
