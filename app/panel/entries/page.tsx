@@ -32,26 +32,32 @@ export default async function PanelEntriesPage({
             <span>Data</span>
             <input type="date" name="date" defaultValue={`${monthRef}-01`} required />
           </label>
+
           <label>
             <span>Ganho bruto</span>
-            <input type="text" name="gross" placeholder="320" required />
+            <input type="text" name="gross" inputMode="decimal" required />
           </label>
+
           <label>
             <span>KM rodado</span>
-            <input type="text" name="km" placeholder="210" required />
+            <input type="text" name="km" inputMode="decimal" required />
           </label>
+
           <label>
             <span>Preço combustível</span>
-            <input type="text" name="fuel_price" placeholder="5,89" required />
+            <input type="text" name="fuel_price" inputMode="decimal" required />
           </label>
+
           <label>
             <span>Consumo (km/L)</span>
-            <input type="text" name="consumption" placeholder="13" required />
+            <input type="text" name="consumption" inputMode="decimal" required />
           </label>
+
           <label>
             <span>Extras</span>
-            <input type="text" name="extras" placeholder="20" />
+            <input type="text" name="extras" inputMode="decimal" />
           </label>
+
           <div className="full">
             <SubmitButton
               idleLabel="Salvar lançamento"
@@ -68,6 +74,7 @@ export default async function PanelEntriesPage({
             <h2 className="section-title">Lançamentos do mês</h2>
           </div>
         </div>
+
         <div className="panel-list">
           {entries.map((entry) => (
             <article key={entry.id} className="panel-entry">
@@ -78,10 +85,12 @@ export default async function PanelEntriesPage({
                     Receita {formatCurrency(Number(entry.gross))} • KM {entry.km}
                   </p>
                 </div>
+
                 <div className="panel-inline">
                   <Link className="panel-button-secondary" href={`/panel/entries/${entry.id}`}>
                     Editar
                   </Link>
+
                   <form action={deletePanelEntryAction}>
                     <input type="hidden" name="id" value={entry.id} />
                     <input type="hidden" name="month" value={monthRef} />
@@ -93,15 +102,18 @@ export default async function PanelEntriesPage({
                   </form>
                 </div>
               </div>
+
               <small>
                 Combustível {formatCurrency(Number(entry.fuel_cost))} • Extras{" "}
                 {formatCurrency(Number(entry.extras))}
               </small>
+
               <div className="panel-entry-profit">
                 Lucro {formatCurrency(Number(entry.profit))}
               </div>
             </article>
           ))}
+
           {entries.length === 0 ? (
             <p className="panel-empty">Nenhum lançamento encontrado para esse mês.</p>
           ) : null}
@@ -109,4 +121,4 @@ export default async function PanelEntriesPage({
       </section>
     </>
   );
-                                                   }
+}
