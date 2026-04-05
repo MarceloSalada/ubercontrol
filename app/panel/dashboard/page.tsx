@@ -3,7 +3,7 @@ import {
   ArrowRight,
   Banknote,
   Landmark,
-  ShieldDollar,
+  PiggyBank,
   TrendingUp,
   Zap,
 } from "lucide-react";
@@ -74,7 +74,7 @@ export default async function PanelDashboardPage({
         <StatCard
           label="Reserva acumulada"
           value={formatCurrency(metrics.reserveBalance)}
-          icon={ShieldDollar}
+          icon={PiggyBank}
         />
       </section>
 
