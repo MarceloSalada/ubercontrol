@@ -31,7 +31,13 @@ function revalidatePanel(monthRef: string) {
   revalidatePath("/panel/costs");
   revalidatePath("/panel/charts");
   revalidatePath("/panel/admin");
-  if (monthRef) revalidatePath(`/panel/dashboard?month=${monthRef}`);
+  revalidatePath("/panel/reserve");
+  if (monthRef) {
+    revalidatePath(`/panel/dashboard?month=${monthRef}`);
+    revalidatePath(`/panel/costs?month=${monthRef}`);
+    revalidatePath(`/panel/charts?month=${monthRef}`);
+    revalidatePath(`/panel/reserve?month=${monthRef}`);
+  }
 }
 
 function monthStartDate(monthRef: string) {
@@ -82,7 +88,6 @@ export async function createPanelEntryAction(formData: FormData) {
     redirect(`/panel/entries?month=${monthRef}&success=Lan%C3%A7amento%20salvo`);
   } catch (error) {
     if (isRedirectError(error)) throw error;
-
     const message = error instanceof Error ? error.message : "Dados inválidos.";
     redirectWithError("/panel/entries", message);
   }
@@ -140,7 +145,6 @@ export async function updatePanelEntryAction(formData: FormData) {
     redirect(`/panel/entries?month=${monthRef}&success=Lan%C3%A7amento%20atualizado`);
   } catch (error) {
     if (isRedirectError(error)) throw error;
-
     const message = error instanceof Error ? error.message : "Dados inválidos.";
     redirectWithError("/panel/entries", message);
   }
@@ -245,8 +249,137 @@ export async function savePanelCostsAction(formData: FormData) {
     redirect(`/panel/costs?month=${monthRef}&success=Custos%20salvos`);
   } catch (error) {
     if (isRedirectError(error)) throw error;
-
     const message = error instanceof Error ? error.message : "Dados inválidos.";
     redirectWithError("/panel/costs", message);
   }
+}
+
+export async function createReserveMovementAction(formData: FormData) {
+  const supabase = await createClient();
+  const db = supabase as any;
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect("/login");
+
+  try {
+    const movementDate = parseDateInput(getFormString(formData, "movement_date", 10));
+    const monthRef = parseMonthRef(getFormString(formData, "month_ref", 7));
+    const movementType = getFormString(formData, "movement_type", 20) as
+      | "expense"
+      | "adjustment";
+    const amount = parseMoneyInput(formData.get("amount"), { min: 0.01, max: 100000 });
+    const description = getFormString(formData, "description", 180);
+
+    if (!["expense", "adjustment"].includes(movementType)) {
+      redirectWithError(`/panel/reserve?month=${monthRef}`, "Tipo de movimento inválido.");
+    }
+
+    const { error } = await db.from("maintenance_reserve_movements").insert({
+      user_id: user.id,
+      movement_date: movementDate,
+      month_ref: monthRef,
+      movement_type: movementType,
+      amount,
+      description: description || null,
+    });
+
+    if (error) {
+      redirectWithError(`/panel/reserve?month=${monthRef}`, "Não foi possível salvar o movimento.");
+    }
+
+    revalidatePanel(monthRef);
+    redirect(`/panel/reserve?month=${monthRef}&success=Movimento%20salvo`);
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    const message = error instanceof Error ? error.message : "Dados inválidos.";
+    redirectWithError("/panel/reserve", message);
+  }
+}
+
+export async function updateReserveMovementAction(formData: FormData) {
+  const supabase = await createClient();
+  const db = supabase as any;
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect("/login");
+
+  try {
+    const id = getFormString(formData, "id", 80);
+    const movementDate = parseDateInput(getFormString(formData, "movement_date", 10));
+    const monthRef = parseMonthRef(getFormString(formData, "month_ref", 7));
+    const movementType = getFormString(formData, "movement_type", 20) as
+      | "deposit"
+      | "expense"
+      | "adjustment";
+    const amount = parseMoneyInput(formData.get("amount"), { min: 0.01, max: 100000 });
+    const description = getFormString(formData, "description", 180);
+
+    if (!id) {
+      redirectWithError("/panel/reserve", "Movimento inválido.");
+    }
+
+    if (!["deposit", "expense", "adjustment"].includes(movementType)) {
+      redirectWithError(`/panel/reserve/${id}`, "Tipo de movimento inválido.");
+    }
+
+    const { error } = await db
+      .from("maintenance_reserve_movements")
+      .update({
+        movement_date: movementDate,
+        month_ref: monthRef,
+        movement_type: movementType,
+        amount,
+        description: description || null,
+      })
+      .eq("id", id)
+      .eq("user_id", user.id);
+
+    if (error) {
+      redirectWithError(`/panel/reserve/${id}`, "Não foi possível atualizar o movimento.");
+    }
+
+    revalidatePanel(monthRef);
+    redirect(`/panel/reserve?month=${monthRef}&success=Movimento%20atualizado`);
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    const message = error instanceof Error ? error.message : "Dados inválidos.";
+    redirectWithError("/panel/reserve", message);
+  }
+}
+
+export async function deleteReserveMovementAction(formData: FormData) {
+  const supabase = await createClient();
+  const db = supabase as any;
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect("/login");
+
+  const id = getFormString(formData, "id", 80);
+  const monthRef = getFormString(formData, "month_ref", 7);
+
+  if (!id) {
+    redirectWithError("/panel/reserve", "Movimento inválido.");
+  }
+
+  const { error } = await db
+    .from("maintenance_reserve_movements")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) {
+    redirectWithError(`/panel/reserve?month=${monthRef}`, "Não foi possível remover o movimento.");
+  }
+
+  revalidatePanel(monthRef);
+  redirect(`/panel/reserve?month=${monthRef}&success=Movimento%20removido`);
 }
