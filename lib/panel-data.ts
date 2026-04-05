@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isAuthorizedAccess } from "@/lib/security/access";
 
 export function currentMonthRef() {
   const now = new Date();
@@ -26,7 +27,23 @@ export async function getPanelSession() {
     redirect("/login");
   }
 
-  const { data: profile } = await db.from("profiles").select("name,email").eq("id", user.id).maybeSingle();
+  const email = user.email ?? user.user_metadata?.email ?? null;
+
+  const { data: authorizedUser } = await db
+    .from("authorized_users")
+    .select("email,is_active,allowed_until")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (!isAuthorizedAccess(authorizedUser, email)) {
+    redirect("/blocked");
+  }
+
+  const { data: profile } = await db
+    .from("profiles")
+    .select("name,email")
+    .eq("id", user.id)
+    .maybeSingle();
 
   return {
     supabase,
@@ -85,7 +102,11 @@ export async function getMonthBundle(userId: string, monthRef: string) {
     | null;
 
   const gross = entries.reduce((acc, item) => acc + Number(item.gross || 0), 0);
-  const variable = entries.reduce((acc, item) => acc + Number(item.fuel_cost || 0) + Number(item.extras || 0), 0);
+  const variable = entries.reduce(
+    (acc, item) => acc + Number(item.fuel_cost || 0) + Number(item.extras || 0),
+    0
+  );
+
   const fixed =
     Number(monthlyCosts?.financing || 0) +
     Number(monthlyCosts?.insurance || 0) +
