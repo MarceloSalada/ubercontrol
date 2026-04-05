@@ -81,6 +81,32 @@ export default async function PanelDashboardPage({
       <section className="panel-card panel-section">
         <div className="panel-header-top">
           <div>
+            <h2 className="section-title">Reserva de manutenção</h2>
+          </div>
+          <Link href={`/panel/reserve?month=${monthRef}`} className="panel-link">
+            Abrir controle
+          </Link>
+        </div>
+
+        <div className="panel-kv compact">
+          <div className="panel-kv-row">
+            <span>Aportes no mês</span>
+            <strong>{formatCurrency(metrics.reserveMonthDeposits)}</strong>
+          </div>
+          <div className="panel-kv-row">
+            <span>Gastos no mês</span>
+            <strong>{formatCurrency(metrics.reserveMonthExpenses)}</strong>
+          </div>
+          <div className="panel-kv-row">
+            <span>Ajustes no mês</span>
+            <strong>{formatCurrency(metrics.reserveMonthAdjustments)}</strong>
+          </div>
+        </div>
+      </section>
+
+      <section className="panel-card panel-section">
+        <div className="panel-header-top">
+          <div>
             <h2 className="section-title">Últimos lançamentos</h2>
           </div>
           <Link href={`/panel/entries?month=${monthRef}`} className="panel-link">
