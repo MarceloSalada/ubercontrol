@@ -21,8 +21,9 @@ export function PanelHeader({ title, subtitle, monthRef }: PanelHeaderProps) {
 
   return (
     <header className="panel-header card">
-      <div className="panel-header-top">
+      <div className="panel-header-top refined">
         <PanelBrand />
+
         {monthLabel ? (
           <div className="panel-month-chip">
             <CalendarRange size={14} />
@@ -30,7 +31,8 @@ export function PanelHeader({ title, subtitle, monthRef }: PanelHeaderProps) {
           </div>
         ) : null}
       </div>
-      <div>
+
+      <div className="panel-header-copy">
         <h1>{title}</h1>
         <p>{subtitle}</p>
       </div>
