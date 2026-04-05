@@ -3,6 +3,7 @@ import { PanelHeader } from "@/components/panel/header";
 import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/security/admin";
 import { saveAuthorizedUserAction } from "@/app/panel/admin/actions";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 export default async function PanelAdminPage({
   searchParams,
@@ -55,9 +56,11 @@ export default async function PanelAdminPage({
             <textarea name="notes" placeholder="Observações internas" />
           </label>
           <div className="full">
-            <button className="panel-button" type="submit">
-              Salvar usuário autorizado
-            </button>
+            <SubmitButton
+              idleLabel="Salvar usuário autorizado"
+              pendingLabel="Salvando..."
+              className="panel-button"
+            />
           </div>
         </form>
       </section>
