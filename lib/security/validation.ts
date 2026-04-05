@@ -4,7 +4,10 @@ export function getFormString(formData: FormData, key: string, maxLength = 120) 
   return raw.trim().slice(0, maxLength);
 }
 
-export function parseMoneyInput(value: FormDataEntryValue | null, options?: { min?: number; max?: number }) {
+export function parseMoneyInput(
+  value: FormDataEntryValue | null,
+  options?: { min?: number; max?: number }
+) {
   const min = options?.min ?? 0;
   const max = options?.max ?? 1_000_000;
 
