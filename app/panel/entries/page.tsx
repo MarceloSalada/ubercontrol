@@ -3,6 +3,7 @@ import { PanelHeader } from "@/components/panel/header";
 import { createPanelEntryAction, deletePanelEntryAction } from "@/app/panel/actions";
 import { currentMonthRef, getMonthBundle, getPanelSession } from "@/lib/panel-data";
 import { formatCurrency } from "@/lib/utils/format";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 export default async function PanelEntriesPage({
   searchParams,
@@ -52,9 +53,11 @@ export default async function PanelEntriesPage({
             <input type="text" name="extras" placeholder="20" />
           </label>
           <div className="full">
-            <button className="panel-button" type="submit">
-              Salvar lançamento
-            </button>
+            <SubmitButton
+              idleLabel="Salvar lançamento"
+              pendingLabel="Salvando..."
+              className="panel-button"
+            />
           </div>
         </form>
       </section>
@@ -82,9 +85,11 @@ export default async function PanelEntriesPage({
                   <form action={deletePanelEntryAction}>
                     <input type="hidden" name="id" value={entry.id} />
                     <input type="hidden" name="month" value={monthRef} />
-                    <button className="panel-button-secondary" type="submit">
-                      Excluir
-                    </button>
+                    <SubmitButton
+                      idleLabel="Excluir"
+                      pendingLabel="Excluindo..."
+                      className="panel-button-secondary"
+                    />
                   </form>
                 </div>
               </div>
@@ -104,4 +109,4 @@ export default async function PanelEntriesPage({
       </section>
     </>
   );
-                      }
+                                                   }
