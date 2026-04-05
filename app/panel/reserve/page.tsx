@@ -22,7 +22,7 @@ export default async function PanelReservePage({
     <>
       <PanelHeader
         title="Reserva de manutenção"
-        subtitle="Controle os aportes, gastos e ajustes da sua reserva."
+        subtitle="Controle os aportes e gastos da sua reserva."
         monthRef={monthRef}
       />
 
@@ -42,10 +42,6 @@ export default async function PanelReservePage({
           <span>Gastos no mês</span>
           <strong>{formatCurrency(metrics.reserveMonthExpenses)}</strong>
         </div>
-        <div className="panel-kv-row">
-          <span>Ajustes no mês</span>
-          <strong>{formatCurrency(metrics.reserveMonthAdjustments)}</strong>
-        </div>
       </section>
 
       <section className="panel-card">
@@ -62,8 +58,8 @@ export default async function PanelReservePage({
           <label>
             <span>Tipo</span>
             <select name="movement_type" defaultValue="expense">
+              <option value="deposit">Aporte extra</option>
               <option value="expense">Gasto da reserva</option>
-              <option value="adjustment">Ajuste manual</option>
             </select>
           </label>
 
@@ -77,7 +73,7 @@ export default async function PanelReservePage({
             <input
               type="text"
               name="description"
-              placeholder="Ex.: troca de óleo, pneu, freio, ajuste manual"
+              placeholder="Ex.: pneu, freio, troca de peça, aporte extra"
             />
           </label>
 
@@ -103,14 +99,12 @@ export default async function PanelReservePage({
             <article key={item.id} className="panel-entry">
               <div className="panel-entry-top">
                 <div>
-                  <strong>{new Date(`${item.movement_date}T12:00:00`).toLocaleDateString("pt-BR")}</strong>
+                  <strong>
+                    {new Date(`${item.movement_date}T12:00:00`).toLocaleDateString("pt-BR")}
+                  </strong>
                   <p>
-                    {item.movement_type === "deposit"
-                      ? "Aporte"
-                      : item.movement_type === "expense"
-                      ? "Gasto"
-                      : "Ajuste"}{" "}
-                    • {formatCurrency(Number(item.amount))}
+                    {item.movement_type === "deposit" ? "Aporte" : "Gasto"} •{" "}
+                    {formatCurrency(Number(item.amount))}
                   </p>
                 </div>
 
@@ -142,4 +136,4 @@ export default async function PanelReservePage({
       </section>
     </>
   );
-          }
+}
