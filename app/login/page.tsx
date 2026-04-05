@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { loginAction } from "@/app/auth/actions";
 import { AuthMessage } from "@/components/auth/auth-message";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 type LoginPageProps = {
   searchParams?: Promise<{
@@ -19,7 +20,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       <section className="card auth-card">
         <h1 className="section-title">Entrar</h1>
         <p className="muted">
-          Entre com seu e-mail e senha para acessar seus lançamentos e dashboard.
+          Entre com seu e-mail e senha para acessar seu painel financeiro.
         </p>
 
         <form action={loginAction} className="form-grid">
@@ -47,9 +48,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             />
           </label>
 
-          <button type="submit" className="primary-btn">
-            Entrar
-          </button>
+          <SubmitButton idleLabel="Entrar" pendingLabel="Entrando..." className="primary-btn" />
         </form>
 
         <p className="small muted">
