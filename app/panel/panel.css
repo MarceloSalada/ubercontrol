@@ -433,6 +433,39 @@
   font-weight:600;
 }
 
+.compact-list{
+  gap:10px;
+}
+
+.compact-entry{
+  padding:12px 14px;
+  gap:8px;
+  border-radius:18px;
+}
+
+.compact-entry-row{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:flex-start;
+  color:#dbeafe;
+}
+
+.compact-entry-row span{
+  color:#94a3b8;
+}
+
+.compact-entry-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.panel-chart-wrap.compact{
+  height:220px;
+}
+
 @media(min-width:720px){
   .panel-grid-2{
     grid-template-columns:1fr 1fr;
@@ -449,4 +482,4 @@
   .panel-mobile-nav{
     width:680px;
   }
-                  }
+  }
