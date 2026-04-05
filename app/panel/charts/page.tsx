@@ -76,4 +76,4 @@ export default async function PanelChartsPage({
       <ChartsView bars={bars} pie={pie} history={history} />
     </>
   );
-}
+        }
