@@ -22,7 +22,7 @@ export default async function PanelReservePage({
     <>
       <PanelHeader
         title="Reserva de manutenção"
-        subtitle="Controle os aportes e gastos da sua reserva."
+        subtitle="Controle os aportes e gastos da reserva."
         monthRef={monthRef}
       />
 
@@ -73,7 +73,7 @@ export default async function PanelReservePage({
             <input
               type="text"
               name="description"
-              placeholder="Ex.: pneu, freio, troca de peça, aporte extra"
+              placeholder="Ex.: pneu, freio, peça, aporte extra"
             />
           </label>
 
@@ -88,52 +88,44 @@ export default async function PanelReservePage({
       </section>
 
       <section className="panel-card panel-section">
-        <div className="panel-header-top">
-          <div>
-            <h2 className="section-title">Movimentos do mês</h2>
-          </div>
-        </div>
+        <h2 className="section-title">Movimentos do mês</h2>
 
-        <div className="panel-list">
+        <div className="panel-list compact-list">
           {reserveMovementsMonth.map((item) => (
-            <article key={item.id} className="panel-entry">
-              <div className="panel-entry-top">
-                <div>
-                  <strong>
-                    {new Date(`${item.movement_date}T12:00:00`).toLocaleDateString("pt-BR")}
-                  </strong>
-                  <p>
-                    {item.movement_type === "deposit" ? "Aporte" : "Gasto"} •{" "}
-                    {formatCurrency(Number(item.amount))}
-                  </p>
-                </div>
-
-                <div className="panel-inline">
-                  <Link className="panel-button-secondary" href={`/panel/reserve/${item.id}`}>
-                    Editar
-                  </Link>
-
-                  <form action={deleteReserveMovementAction}>
-                    <input type="hidden" name="id" value={item.id} />
-                    <input type="hidden" name="month_ref" value={monthRef} />
-                    <SubmitButton
-                      idleLabel="Excluir"
-                      pendingLabel="Excluindo..."
-                      className="panel-button-secondary"
-                    />
-                  </form>
-                </div>
+            <article key={item.id} className="panel-entry compact-entry">
+              <div className="compact-entry-row">
+                <strong>{new Date(`${item.movement_date}T12:00:00`).toLocaleDateString("pt-BR")}</strong>
+                <span>{item.movement_type === "deposit" ? "Aporte" : "Gasto"}</span>
               </div>
 
-              <small>{item.description || "Sem descrição"}</small>
+              <div className="compact-entry-row">
+                <span>{item.description || "Sem descrição"}</span>
+                <strong>{formatCurrency(Number(item.amount))}</strong>
+              </div>
+
+              <div className="compact-entry-actions">
+                <Link className="panel-button-secondary" href={`/panel/reserve/${item.id}`}>
+                  Editar
+                </Link>
+
+                <form action={deleteReserveMovementAction}>
+                  <input type="hidden" name="id" value={item.id} />
+                  <input type="hidden" name="month_ref" value={monthRef} />
+                  <SubmitButton
+                    idleLabel="Excluir"
+                    pendingLabel="Excluindo..."
+                    className="panel-button-secondary"
+                  />
+                </form>
+              </div>
             </article>
           ))}
 
           {reserveMovementsMonth.length === 0 ? (
-            <p className="panel-empty">Nenhum movimento de reserva encontrado para esse mês.</p>
+            <p className="panel-empty">Nenhum movimento encontrado para esse mês.</p>
           ) : null}
         </div>
       </section>
     </>
   );
-}
+              }
