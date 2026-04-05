@@ -19,7 +19,7 @@ export default async function PanelDashboardPage({
     <>
       <PanelHeader
         title="Dashboard"
-        subtitle={`Bem-vindo, ${userLabel}.`}
+        subtitle={`Bem-vindo, ${userLabel}. Veja o fechamento do período e seus principais números.`}
         monthRef={monthRef}
       />
 
@@ -110,4 +110,4 @@ export default async function PanelDashboardPage({
       </section>
     </>
   );
-}
+          }
