@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { signupAction } from "@/app/auth/actions";
 import { AuthMessage } from "@/components/auth/auth-message";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 type SignupPageProps = {
   searchParams?: Promise<{
@@ -19,7 +20,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
       <section className="card auth-card">
         <h1 className="section-title">Criar conta</h1>
         <p className="muted">
-          Cadastre-se para salvar seus dados no banco e acessar seu painel de qualquer lugar.
+          Cadastre-se para acessar seu painel e acompanhar seu resultado por mês.
         </p>
 
         <form action={signupAction} className="form-grid">
@@ -59,9 +60,11 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
             />
           </label>
 
-          <button type="submit" className="primary-btn">
-            Criar conta
-          </button>
+          <SubmitButton
+            idleLabel="Criar conta"
+            pendingLabel="Criando conta..."
+            className="primary-btn"
+          />
         </form>
 
         <p className="small muted">
