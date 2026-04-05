@@ -11,8 +11,10 @@ export default async function PanelDashboardPage({
 }) {
   const params = await searchParams;
   const monthRef = params?.month || currentMonthRef();
-  const { userLabel, userEmail, user } = await getPanelSession();
-  const { metrics } = await getMonthBundle(user.id, monthRef);
+  const { userLabel, user } = await getPanelSession();
+  const { metrics, entries } = await getMonthBundle(user.id, monthRef);
+
+  const latestEntry = entries[0] ?? null;
 
   return (
     <>
@@ -48,18 +50,41 @@ export default async function PanelDashboardPage({
 
       <section className="panel-card panel-kv compact">
         <div className="panel-kv-row">
-          <span>Conta</span>
-          <strong>{userEmail}</strong>
-        </div>
-        <div className="panel-kv-row">
           <span>Dias lançados</span>
           <strong>{metrics.workedDays}</strong>
         </div>
-        <div className="panel-kv-row">
-          <span>Média líquida/dia</span>
-          <strong>{formatCurrency(metrics.average)}</strong>
+      </section>
+
+      <section className="panel-card panel-section">
+        <div className="panel-header-top">
+          <div>
+            <h2 className="section-title">Última diária</h2>
+          </div>
         </div>
+
+        {latestEntry ? (
+          <div className="panel-kv compact">
+            <div className="panel-kv-row">
+              <span>Receita do dia</span>
+              <strong>{formatCurrency(Number(latestEntry.gross))}</strong>
+            </div>
+            <div className="panel-kv-row">
+              <span>KM rodado</span>
+              <strong>{Number(latestEntry.km)}</strong>
+            </div>
+            <div className="panel-kv-row">
+              <span>Combustível gasto</span>
+              <strong>{formatCurrency(Number(latestEntry.fuel_cost))}</strong>
+            </div>
+            <div className="panel-kv-row">
+              <span>Lucro do dia</span>
+              <strong>{formatCurrency(Number(latestEntry.profit))}</strong>
+            </div>
+          </div>
+        ) : (
+          <p className="panel-empty">Ainda não há lançamentos neste mês.</p>
+        )}
       </section>
     </>
   );
-}
+              }
