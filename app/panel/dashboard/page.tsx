@@ -1,7 +1,7 @@
 import { Banknote, PiggyBank, TrendingUp, Wallet } from "lucide-react";
 import { PanelHeader } from "@/components/panel/header";
 import { StatCard } from "@/components/panel/stat-card";
-import { currentMonthRef, getMonthBundle, getPanelSession } from "@/lib/panel-data";
+import { currentMonthRef, getDashboardData, getPanelSession } from "@/lib/panel-data";
 import { formatCurrency } from "@/lib/utils/format";
 
 export default async function PanelDashboardPage({
@@ -12,9 +12,7 @@ export default async function PanelDashboardPage({
   const params = await searchParams;
   const monthRef = params?.month || currentMonthRef();
   const { userLabel, user } = await getPanelSession();
-  const { metrics, entries } = await getMonthBundle(user.id, monthRef);
-
-  const latestEntry = entries[0] ?? null;
+  const { latestEntry, metrics } = await getDashboardData(user.id, monthRef);
 
   return (
     <>
@@ -25,11 +23,7 @@ export default async function PanelDashboardPage({
       />
 
       <section className="panel-stat-grid">
-        <StatCard
-          label="Receita do mês"
-          value={formatCurrency(metrics.gross)}
-          icon={TrendingUp}
-        />
+        <StatCard label="Receita do mês" value={formatCurrency(metrics.gross)} icon={TrendingUp} />
         <StatCard
           label="Custos totais"
           value={formatCurrency(metrics.variable + metrics.fixed)}
@@ -87,4 +81,4 @@ export default async function PanelDashboardPage({
       </section>
     </>
   );
-              }
+}
