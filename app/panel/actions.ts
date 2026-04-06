@@ -1,3 +1,4 @@
+// app/panel/actions.ts
 "use server";
 
 import { revalidatePath } from "next/cache";
@@ -25,16 +26,39 @@ function redirectWithError(path: string, message: string) {
   redirect(`${path}${path.includes("?") ? "&" : "?"}error=${encodeURIComponent(message)}`);
 }
 
-function revalidatePanel(monthRef: string) {
+function revalidateEntryPaths(monthRef: string) {
   revalidatePath("/panel/dashboard");
   revalidatePath("/panel/entries");
+  revalidatePath("/panel/charts");
+
+  if (monthRef) {
+    revalidatePath(`/panel/dashboard?month=${monthRef}`);
+    revalidatePath(`/panel/entries?month=${monthRef}`);
+    revalidatePath(`/panel/charts?month=${monthRef}`);
+  }
+}
+
+function revalidateCostsPaths(monthRef: string) {
+  revalidatePath("/panel/dashboard");
   revalidatePath("/panel/costs");
   revalidatePath("/panel/charts");
-  revalidatePath("/panel/admin");
   revalidatePath("/panel/reserve");
+
   if (monthRef) {
     revalidatePath(`/panel/dashboard?month=${monthRef}`);
     revalidatePath(`/panel/costs?month=${monthRef}`);
+    revalidatePath(`/panel/charts?month=${monthRef}`);
+    revalidatePath(`/panel/reserve?month=${monthRef}`);
+  }
+}
+
+function revalidateReservePaths(monthRef: string) {
+  revalidatePath("/panel/dashboard");
+  revalidatePath("/panel/charts");
+  revalidatePath("/panel/reserve");
+
+  if (monthRef) {
+    revalidatePath(`/panel/dashboard?month=${monthRef}`);
     revalidatePath(`/panel/charts?month=${monthRef}`);
     revalidatePath(`/panel/reserve?month=${monthRef}`);
   }
@@ -84,7 +108,7 @@ export async function createPanelEntryAction(formData: FormData) {
       redirectWithError(`/panel/entries?month=${monthRef}`, "Não foi possível salvar o lançamento.");
     }
 
-    revalidatePanel(monthRef);
+    revalidateEntryPaths(monthRef);
     redirect(`/panel/entries?month=${monthRef}&success=Lan%C3%A7amento%20salvo`);
   } catch (error) {
     if (isRedirectError(error)) throw error;
@@ -141,7 +165,7 @@ export async function updatePanelEntryAction(formData: FormData) {
       redirectWithError(`/panel/entries/${id}`, "Não foi possível atualizar o lançamento.");
     }
 
-    revalidatePanel(monthRef);
+    revalidateEntryPaths(monthRef);
     redirect(`/panel/entries?month=${monthRef}&success=Lan%C3%A7amento%20atualizado`);
   } catch (error) {
     if (isRedirectError(error)) throw error;
@@ -177,7 +201,7 @@ export async function deletePanelEntryAction(formData: FormData) {
     redirectWithError(`/panel/entries?month=${monthRef}`, "Não foi possível remover o lançamento.");
   }
 
-  revalidatePanel(monthRef);
+  revalidateEntryPaths(monthRef);
   redirect(`/panel/entries?month=${monthRef}&success=Lan%C3%A7amento%20removido`);
 }
 
@@ -245,7 +269,7 @@ export async function savePanelCostsAction(formData: FormData) {
       });
     }
 
-    revalidatePanel(monthRef);
+    revalidateCostsPaths(monthRef);
     redirect(`/panel/costs?month=${monthRef}&success=Custos%20salvos`);
   } catch (error) {
     if (isRedirectError(error)) throw error;
@@ -290,7 +314,7 @@ export async function createReserveMovementAction(formData: FormData) {
       redirectWithError(`/panel/reserve?month=${monthRef}`, "Não foi possível salvar o movimento.");
     }
 
-    revalidatePanel(monthRef);
+    revalidateReservePaths(monthRef);
     redirect(`/panel/reserve?month=${monthRef}&success=Movimento%20salvo`);
   } catch (error) {
     if (isRedirectError(error)) throw error;
@@ -344,7 +368,7 @@ export async function updateReserveMovementAction(formData: FormData) {
       redirectWithError(`/panel/reserve/${id}`, "Não foi possível atualizar o movimento.");
     }
 
-    revalidatePanel(monthRef);
+    revalidateReservePaths(monthRef);
     redirect(`/panel/reserve?month=${monthRef}&success=Movimento%20atualizado`);
   } catch (error) {
     if (isRedirectError(error)) throw error;
@@ -380,6 +404,6 @@ export async function deleteReserveMovementAction(formData: FormData) {
     redirectWithError(`/panel/reserve?month=${monthRef}`, "Não foi possível remover o movimento.");
   }
 
-  revalidatePanel(monthRef);
+  revalidateReservePaths(monthRef);
   redirect(`/panel/reserve?month=${monthRef}&success=Movimento%20removido`);
-}
+                         }
