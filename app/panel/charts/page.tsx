@@ -1,8 +1,9 @@
+// app/panel/charts/page.tsx
 import { CalendarDays, Landmark, PiggyBank, TrendingUp, Wallet } from "lucide-react";
 import { ChartsView } from "@/components/panel/charts-view";
 import { PanelHeader } from "@/components/panel/header";
 import { StatCard } from "@/components/panel/stat-card";
-import { currentMonthRef, getMonthBundle, getPanelSession } from "@/lib/panel-data";
+import { currentMonthRef, getChartsData, getPanelSession } from "@/lib/panel-data";
 import { formatCurrency } from "@/lib/utils/format";
 
 export default async function PanelChartsPage({
@@ -13,15 +14,13 @@ export default async function PanelChartsPage({
   const params = await searchParams;
   const monthRef = params?.month || currentMonthRef();
   const { user } = await getPanelSession();
-  const { metrics } = await getMonthBundle(user.id, monthRef);
+  const { metrics, reserveHistory } = await getChartsData(user.id, monthRef);
 
-  const history = [
-    {
-      label: "Mês atual",
-      lucro: metrics.net,
-      reserva: metrics.reserveBalance,
-    },
-  ];
+  const history = reserveHistory.map((item) => ({
+    label: item.label,
+    lucro: item.net,
+    reserva: item.reserveBalance,
+  }));
 
   return (
     <>
