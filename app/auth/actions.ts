@@ -1,3 +1,4 @@
+// app/auth/actions.ts
 "use server";
 
 import { redirect } from "next/navigation";
@@ -22,7 +23,7 @@ export async function loginAction(formData: FormData) {
     redirect(`/login?error=${encodeURIComponent(error.message)}`);
   }
 
-  redirect("/dashboard");
+  redirect("/panel/dashboard");
 }
 
 export async function signupAction(formData: FormData) {
@@ -33,11 +34,11 @@ export async function signupAction(formData: FormData) {
   const supabase = await createClient();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
-  const { data, error } = await supabase.auth.signUp({
+  const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: siteUrl ? `${siteUrl}/dashboard` : undefined,
+      emailRedirectTo: siteUrl ? `${siteUrl}/panel/dashboard` : undefined,
       data: {
         name,
       },
@@ -48,7 +49,7 @@ export async function signupAction(formData: FormData) {
     redirect(`/signup?error=${encodeURIComponent(error.message)}`);
   }
 
-  redirect("/dashboard");
+  redirect("/panel/dashboard");
 }
 
 export async function logoutAction() {
