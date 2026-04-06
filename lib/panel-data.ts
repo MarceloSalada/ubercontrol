@@ -1,6 +1,72 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isAuthorizedAccess } from "@/lib/security/access";
+
+type DbClient = any;
+
+type EntryRecord = {
+  id: string;
+  date: string;
+  gross: number;
+  km: number;
+  fuel_price: number;
+  consumption: number;
+  extras: number;
+  fuel_cost: number;
+  total_cost: number;
+  profit: number;
+};
+
+type MonthlyCostsRecord = {
+  id?: string;
+  month_ref?: string;
+  financing?: number;
+  insurance?: number;
+  ipva?: number;
+  reserve_maintenance?: number;
+  cellphone?: number;
+  washing?: number;
+  other_monthly?: number;
+};
+
+type ReserveMovementRecord = {
+  id: string;
+  movement_date: string;
+  month_ref: string;
+  movement_type: "deposit" | "expense" | "adjustment";
+  amount: number;
+  description?: string | null;
+};
+
+type MonthMetrics = {
+  gross: number;
+  variable: number;
+  fixed: number;
+  net: number;
+  workedDays: number;
+  average: number;
+  reserveDeposits: number;
+  reserveExpenses: number;
+  reserveAdjustments: number;
+  reserveBalance: number;
+  reserveMonthDeposits: number;
+  reserveMonthExpenses: number;
+  reserveMonthAdjustments: number;
+};
+
+type ReserveHistoryPoint = {
+  monthRef: string;
+  label: string;
+  gross: number;
+  variable: number;
+  fixed: number;
+  net: number;
+  reserveDeposits: number;
+  reserveExpenses: number;
+  reserveAdjustments: number;
+  reserveBalance: number;
+};
 
 export function currentMonthRef() {
   const now = new Date();
@@ -49,126 +115,24 @@ function formatShortMonth(monthRef: string) {
   });
 }
 
-export async function getPanelSession() {
-  const supabase = await createClient();
-  const db = supabase as any;
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  const email = user.email ?? user.user_metadata?.email ?? null;
-
-  const { data: authorizedUser } = await db
-    .from("authorized_users")
-    .select("email,is_active,allowed_until")
-    .eq("email", email)
-    .maybeSingle();
-
-  if (!isAuthorizedAccess(authorizedUser, email)) {
-    redirect("/blocked");
-  }
-
-  const { data: profile } = await db
-    .from("profiles")
-    .select("name,email")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  return {
-    supabase,
-    db,
-    user,
-    userLabel: profile?.name || user.user_metadata?.name || user.email || "Usuário",
-    userEmail: profile?.email || user.email || "",
-  };
+function sumMonthlyCosts(monthlyCosts: MonthlyCostsRecord | null) {
+  return (
+    Number(monthlyCosts?.financing || 0) +
+    Number(monthlyCosts?.insurance || 0) +
+    Number(monthlyCosts?.ipva || 0) +
+    Number(monthlyCosts?.reserve_maintenance || 0) +
+    Number(monthlyCosts?.cellphone || 0) +
+    Number(monthlyCosts?.washing || 0) +
+    Number(monthlyCosts?.other_monthly || 0)
+  );
 }
 
-export async function getMonthBundle(userId: string, monthRef: string) {
-  const supabase = await createClient();
-  const db = supabase as any;
-  const range = getMonthRange(monthRef);
-  const monthEnd = endOfMonthDate(monthRef);
-
-  const historyMonths = buildMonthSequence(monthRef, 6);
-  const historyStart = getMonthRange(historyMonths[0]).start;
-
-  const { data: entriesData } = await db
-    .from("daily_entries")
-    .select("id,date,gross,km,fuel_price,consumption,extras,fuel_cost,total_cost,profit")
-    .eq("user_id", userId)
-    .gte("date", range.start)
-    .lt("date", range.end)
-    .order("date", { ascending: false });
-
-  const { data: monthlyCostsData } = await db
-    .from("monthly_costs")
-    .select("id,month_ref,financing,insurance,ipva,reserve_maintenance,cellphone,washing,other_monthly")
-    .eq("user_id", userId)
-    .eq("month_ref", monthRef)
-    .maybeSingle();
-
-  const { data: reserveMovementsData } = await db
-    .from("maintenance_reserve_movements")
-    .select("id,movement_date,month_ref,movement_type,amount,description")
-    .eq("user_id", userId)
-    .lte("movement_date", monthEnd)
-    .order("movement_date", { ascending: true });
-
-  const { data: historyEntriesData } = await db
-    .from("daily_entries")
-    .select("date,gross,fuel_cost,extras")
-    .eq("user_id", userId)
-    .gte("date", historyStart)
-    .lte("date", monthEnd);
-
-  const { data: historyMonthlyCostsData } = await db
-    .from("monthly_costs")
-    .select("month_ref,financing,insurance,ipva,reserve_maintenance,cellphone,washing,other_monthly")
-    .eq("user_id", userId)
-    .gte("month_ref", historyMonths[0])
-    .lte("month_ref", monthRef);
-
-  const entries = (entriesData ?? []) as Array<{
-    id: string;
-    date: string;
-    gross: number;
-    km: number;
-    fuel_price: number;
-    consumption: number;
-    extras: number;
-    fuel_cost: number;
-    total_cost: number;
-    profit: number;
-  }>;
-
-  const monthlyCosts = (monthlyCostsData ?? null) as
-    | {
-        id?: string;
-        month_ref?: string;
-        financing?: number;
-        insurance?: number;
-        ipva?: number;
-        reserve_maintenance?: number;
-        cellphone?: number;
-        washing?: number;
-        other_monthly?: number;
-      }
-    | null;
-
-  const reserveMovements = (reserveMovementsData ?? []) as Array<{
-    id: string;
-    movement_date: string;
-    month_ref: string;
-    movement_type: "deposit" | "expense" | "adjustment";
-    amount: number;
-    description?: string | null;
-  }>;
-
+function buildMonthMetrics(
+  entries: EntryRecord[],
+  monthlyCosts: MonthlyCostsRecord | null,
+  reserveMovements: ReserveMovementRecord[],
+  monthRef: string
+): MonthMetrics {
   const reserveMovementsMonth = reserveMovements.filter((item) => item.month_ref === monthRef);
 
   const gross = entries.reduce((acc, item) => acc + Number(item.gross || 0), 0);
@@ -176,16 +140,7 @@ export async function getMonthBundle(userId: string, monthRef: string) {
     (acc, item) => acc + Number(item.fuel_cost || 0) + Number(item.extras || 0),
     0
   );
-
-  const fixed =
-    Number(monthlyCosts?.financing || 0) +
-    Number(monthlyCosts?.insurance || 0) +
-    Number(monthlyCosts?.ipva || 0) +
-    Number(monthlyCosts?.reserve_maintenance || 0) +
-    Number(monthlyCosts?.cellphone || 0) +
-    Number(monthlyCosts?.washing || 0) +
-    Number(monthlyCosts?.other_monthly || 0);
-
+  const fixed = sumMonthlyCosts(monthlyCosts);
   const net = gross - variable - fixed;
   const workedDays = entries.length;
   const average = workedDays > 0 ? net / workedDays : 0;
@@ -202,8 +157,6 @@ export async function getMonthBundle(userId: string, monthRef: string) {
     .filter((item) => item.movement_type === "adjustment")
     .reduce((acc, item) => acc + Number(item.amount || 0), 0);
 
-  const reserveBalance = reserveDeposits + reserveAdjustments - reserveExpenses;
-
   const reserveMonthDeposits = reserveMovementsMonth
     .filter((item) => item.movement_type === "deposit")
     .reduce((acc, item) => acc + Number(item.amount || 0), 0);
@@ -216,21 +169,87 @@ export async function getMonthBundle(userId: string, monthRef: string) {
     .filter((item) => item.movement_type === "adjustment")
     .reduce((acc, item) => acc + Number(item.amount || 0), 0);
 
-  const historyMap = new Map<
-    string,
-    {
-      monthRef: string;
-      label: string;
-      gross: number;
-      variable: number;
-      fixed: number;
-      net: number;
-      reserveDeposits: number;
-      reserveExpenses: number;
-      reserveAdjustments: number;
-      reserveBalance: number;
-    }
-  >();
+  return {
+    gross,
+    variable,
+    fixed,
+    net,
+    workedDays,
+    average,
+    reserveDeposits,
+    reserveExpenses,
+    reserveAdjustments,
+    reserveBalance: reserveDeposits + reserveAdjustments - reserveExpenses,
+    reserveMonthDeposits,
+    reserveMonthExpenses,
+    reserveMonthAdjustments,
+  };
+}
+
+async function fetchEntriesByMonth(db: DbClient, userId: string, monthRef: string) {
+  const range = getMonthRange(monthRef);
+
+  const { data } = await db
+    .from("daily_entries")
+    .select("id,date,gross,km,fuel_price,consumption,extras,fuel_cost,total_cost,profit")
+    .eq("user_id", userId)
+    .gte("date", range.start)
+    .lt("date", range.end)
+    .order("date", { ascending: false });
+
+  return (data ?? []) as EntryRecord[];
+}
+
+async function fetchMonthlyCostsByMonth(db: DbClient, userId: string, monthRef: string) {
+  const { data } = await db
+    .from("monthly_costs")
+    .select("id,month_ref,financing,insurance,ipva,reserve_maintenance,cellphone,washing,other_monthly")
+    .eq("user_id", userId)
+    .eq("month_ref", monthRef)
+    .maybeSingle();
+
+  return (data ?? null) as MonthlyCostsRecord | null;
+}
+
+async function fetchReserveMovementsUntilMonthEnd(db: DbClient, userId: string, monthRef: string) {
+  const monthEnd = endOfMonthDate(monthRef);
+
+  const { data } = await db
+    .from("maintenance_reserve_movements")
+    .select("id,movement_date,month_ref,movement_type,amount,description")
+    .eq("user_id", userId)
+    .lte("movement_date", monthEnd)
+    .order("movement_date", { ascending: true });
+
+  return (data ?? []) as ReserveMovementRecord[];
+}
+
+async function buildReserveHistory(
+  db: DbClient,
+  userId: string,
+  monthRef: string,
+  reserveMovements: ReserveMovementRecord[]
+) {
+  const historyMonths = buildMonthSequence(monthRef, 6);
+  const historyStart = getMonthRange(historyMonths[0]).start;
+  const monthEnd = endOfMonthDate(monthRef);
+
+  const [{ data: historyEntriesData }, { data: historyMonthlyCostsData }] = await Promise.all([
+    db
+      .from("daily_entries")
+      .select("date,gross,fuel_cost,extras")
+      .eq("user_id", userId)
+      .gte("date", historyStart)
+      .lte("date", monthEnd),
+    db
+      .from("monthly_costs")
+      .select("month_ref,financing,insurance,ipva,reserve_maintenance,cellphone,washing,other_monthly")
+      .eq("user_id", userId)
+      .gte("month_ref", historyMonths[0])
+      .lte("month_ref", monthRef),
+  ]);
+
+  const historyMap = new Map<string, ReserveHistoryPoint>();
 
   historyMonths.forEach((item) => {
     historyMap.set(item, {
@@ -288,10 +307,8 @@ export async function getMonthBundle(userId: string, monthRef: string) {
       Number(item.other_monthly || 0);
   });
 
-  const historyStartDate = historyStart;
-
   const openingReserveBalance = reserveMovements
-    .filter((item) => item.movement_date < historyStartDate)
+    .filter((item) => item.movement_date < historyStart)
     .reduce((acc, item) => {
       if (item.movement_type === "deposit") return acc + Number(item.amount || 0);
       if (item.movement_type === "expense") return acc - Number(item.amount || 0);
@@ -313,7 +330,7 @@ export async function getMonthBundle(userId: string, monthRef: string) {
 
   let runningReserve = openingReserveBalance;
 
-  const reserveHistory = historyMonths.map((item) => {
+  return historyMonths.map((item) => {
     const bucket = historyMap.get(item)!;
     bucket.net = bucket.gross - bucket.variable - bucket.fixed;
     runningReserve =
@@ -336,6 +353,105 @@ export async function getMonthBundle(userId: string, monthRef: string) {
       reserveBalance: Number(bucket.reserveBalance.toFixed(2)),
     };
   });
+}
+
+export const getPanelSession = cache(async () => {
+  const supabase = await createClient();
+  const db = supabase as DbClient;
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const email = user.email ?? user.user_metadata?.email ?? null;
+
+  const [{ data: authorizedUser }, { data: profile }] = await Promise.all([
+    db
+      .from("authorized_users")
+      .select("email,is_active,allowed_until")
+      .eq("email", email)
+      .maybeSingle(),
+    db.from("profiles").select("name,email").eq("id", user.id).maybeSingle(),
+  ]);
+
+  if (!isAuthorizedAccess(authorizedUser, email)) {
+    redirect("/blocked");
+  }
+
+  return {
+    supabase,
+    db,
+    user,
+    userLabel: profile?.name || user.user_metadata?.name || user.email || "Usuário",
+    userEmail: profile?.email || user.email || "",
+  };
+});
+
+export async function getEntriesData(userId: string, monthRef: string) {
+  const supabase = await createClient();
+  const db = supabase as DbClient;
+
+  return fetchEntriesByMonth(db, userId, monthRef);
+}
+
+export async function getMonthlyCostsData(userId: string, monthRef: string) {
+  const supabase = await createClient();
+  const db = supabase as DbClient;
+
+  return fetchMonthlyCostsByMonth(db, userId, monthRef);
+}
+
+export async function getDashboardData(userId: string, monthRef: string) {
+  const supabase = await createClient();
+  const db = supabase as DbClient;
+
+  const [entries, monthlyCosts, reserveMovements] = await Promise.all([
+    fetchEntriesByMonth(db, userId, monthRef),
+    fetchMonthlyCostsByMonth(db, userId, monthRef),
+    fetchReserveMovementsUntilMonthEnd(db, userId, monthRef),
+  ]);
+
+  return {
+    entries,
+    latestEntry: entries[0] ?? null,
+    metrics: buildMonthMetrics(entries, monthlyCosts, reserveMovements, monthRef),
+  };
+}
+
+export async function getChartsData(userId: string, monthRef: string) {
+  const supabase = await createClient();
+  const db = supabase as DbClient;
+
+  const [entries, monthlyCosts, reserveMovements] = await Promise.all([
+    fetchEntriesByMonth(db, userId, monthRef),
+    fetchMonthlyCostsByMonth(db, userId, monthRef),
+    fetchReserveMovementsUntilMonthEnd(db, userId, monthRef),
+  ]);
+
+  const reserveHistory = await buildReserveHistory(db, userId, monthRef, reserveMovements);
+
+  return {
+    metrics: buildMonthMetrics(entries, monthlyCosts, reserveMovements, monthRef),
+    reserveHistory,
+  };
+}
+
+export async function getMonthBundle(userId: string, monthRef: string) {
+  const supabase = await createClient();
+  const db = supabase as DbClient;
+
+  const [entries, monthlyCosts, reserveMovements] = await Promise.all([
+    fetchEntriesByMonth(db, userId, monthRef),
+    fetchMonthlyCostsByMonth(db, userId, monthRef),
+    fetchReserveMovementsUntilMonthEnd(db, userId, monthRef),
+  ]);
+
+  const reserveMovementsMonth = reserveMovements.filter((item) => item.month_ref === monthRef);
+  const reserveHistory = await buildReserveHistory(db, userId, monthRef, reserveMovements);
 
   return {
     entries,
@@ -343,27 +459,13 @@ export async function getMonthBundle(userId: string, monthRef: string) {
     reserveMovements,
     reserveMovementsMonth,
     reserveHistory,
-    metrics: {
-      gross,
-      variable,
-      fixed,
-      net,
-      workedDays,
-      average,
-      reserveDeposits,
-      reserveExpenses,
-      reserveAdjustments,
-      reserveBalance,
-      reserveMonthDeposits,
-      reserveMonthExpenses,
-      reserveMonthAdjustments,
-    },
+    metrics: buildMonthMetrics(entries, monthlyCosts, reserveMovements, monthRef),
   };
 }
 
 export async function getReserveMovementById(userId: string, id: string) {
   const supabase = await createClient();
-  const db = supabase as any;
+  const db = supabase as DbClient;
 
   const { data } = await db
     .from("maintenance_reserve_movements")
@@ -372,14 +474,5 @@ export async function getReserveMovementById(userId: string, id: string) {
     .eq("user_id", userId)
     .maybeSingle();
 
-  return data as
-    | {
-        id: string;
-        movement_date: string;
-        month_ref: string;
-        movement_type: "deposit" | "expense" | "adjustment";
-        amount: number;
-        description?: string | null;
-      }
-    | null;
-        }
+  return (data ?? null) as ReserveMovementRecord | null;
+             }
