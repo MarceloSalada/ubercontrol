@@ -1,8 +1,9 @@
+// app/panel/costs/page.tsx
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { PanelHeader } from "@/components/panel/header";
 import { savePanelCostsAction } from "@/app/panel/actions";
-import { currentMonthRef, getMonthBundle, getPanelSession } from "@/lib/panel-data";
+import { currentMonthRef, getMonthlyCostsData, getPanelSession } from "@/lib/panel-data";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 function inputValue(value?: number) {
@@ -34,7 +35,7 @@ export default async function PanelCostsPage({
   const nextMonth = shiftMonth(monthRef, 1);
 
   const { user } = await getPanelSession();
-  const { monthlyCosts } = await getMonthBundle(user.id, monthRef);
+  const monthlyCosts = await getMonthlyCostsData(user.id, monthRef);
 
   return (
     <>
@@ -153,4 +154,4 @@ export default async function PanelCostsPage({
       </section>
     </>
   );
-}
+              }
