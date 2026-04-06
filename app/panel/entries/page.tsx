@@ -1,6 +1,6 @@
 import { PanelHeader } from "@/components/panel/header";
 import { createPanelEntryAction, deletePanelEntryAction } from "@/app/panel/actions";
-import { currentMonthRef, getMonthBundle, getPanelSession } from "@/lib/panel-data";
+import { currentMonthRef, getEntriesData, getPanelSession } from "@/lib/panel-data";
 import { formatCurrency } from "@/lib/utils/format";
 import { SubmitButton } from "@/components/ui/submit-button";
 
@@ -12,7 +12,7 @@ export default async function PanelEntriesPage({
   const params = await searchParams;
   const monthRef = params?.month || currentMonthRef();
   const { user } = await getPanelSession();
-  const { entries } = await getMonthBundle(user.id, monthRef);
+  const entries = await getEntriesData(user.id, monthRef);
 
   return (
     <>

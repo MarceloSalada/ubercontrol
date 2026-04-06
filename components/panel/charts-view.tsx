@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import {
   CartesianGrid,
   Legend,
@@ -19,7 +20,16 @@ type ChartsViewProps = {
   }>;
 };
 
-export function ChartsView({ history }: ChartsViewProps) {
+export const ChartsView = memo(function ChartsView({ history }: ChartsViewProps) {
+  if (history.length === 0) {
+    return (
+      <section className="panel-card">
+        <h2 className="section-title">Lucro x reserva</h2>
+        <p className="panel-empty">Ainda não há dados suficientes para exibir o gráfico.</p>
+      </section>
+    );
+  }
+
   return (
     <section className="panel-card">
       <h2 className="section-title">Lucro x reserva</h2>
@@ -52,4 +62,4 @@ export function ChartsView({ history }: ChartsViewProps) {
       </div>
     </section>
   );
-}
+});
